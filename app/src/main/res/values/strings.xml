@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">MAccessbilityService</string>
+    <string name="str_start_auto_reply">开启自动回复</string>
+    <string name="str_close_auto_reply">关闭自动回复</string>
+    <string name="str_we_chat_auto_reply">微信自动回复</string>
+    <string name="str_add_auto_reply_btn">增加自动回复</string>
+    <string name="str_please_input_wechat_username">请输入微信用户名</string>
+    <string name="str_please_input_auto_reply_msg">请输入自动回复的消息</string>
+    <string name="str_robot_auto_reply">机器人自动回复</string>
+    <string name="str_set_auto_reply_msg">设置自动回复信息</string>
+    <string name="str_add">添加</string>
+    <string name="str_cancel">取消</string>
+    <string name="str_input_dont_is_empty">输入不能为空</string>
+
+</resources>
