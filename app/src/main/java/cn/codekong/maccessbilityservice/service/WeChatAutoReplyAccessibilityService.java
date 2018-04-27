@@ -7,6 +7,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 
@@ -39,6 +40,7 @@ public class WeChatAutoReplyAccessibilityService extends BaseAccessibilityServic
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         int eventType = event.getEventType();
+        Log.e(TAG, "onAccessibilityEvent: eventType =====" + eventType);
         switch (eventType) {
             case AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED:
                 List<CharSequence> textList = event.getText();
@@ -74,6 +76,8 @@ public class WeChatAutoReplyAccessibilityService extends BaseAccessibilityServic
             Notification notification = (Notification) event.getParcelableData();
             String content = notification.tickerText.toString();
 
+            Log.e(TAG, "notifyWeChat: content = " + content);
+            //获取通知内容并分割
             String[] c = content.split(":");
             mChatUserName = c[0].trim();
             mChatContent = c[1].trim();
@@ -122,7 +126,10 @@ public class WeChatAutoReplyAccessibilityService extends BaseAccessibilityServic
      */
     private void sendMsg() {
         AccessibilityNodeInfo sendBtnNodeInfo = findViewByText("发送", true);
-        if ("android.widget.Button".equals(sendBtnNodeInfo.getClassName().toString())) {
+        if (sendBtnNodeInfo == null) {
+            sendBtnNodeInfo = findViewByText("Send");
+        }
+        if (sendBtnNodeInfo != null && "android.widget.Button".equals(sendBtnNodeInfo.getClassName().toString())) {
             sendBtnNodeInfo.performAction(AccessibilityNodeInfo.ACTION_CLICK);
         }
         //返回到微信主页面
@@ -137,6 +144,7 @@ public class WeChatAutoReplyAccessibilityService extends BaseAccessibilityServic
         super.onServiceConnected();
         //从SharePreferences中读取所有的配置
         mAutoReplyUserMsgMap = SfUtil.getDataList(this, Config.WE_CHAT_AUTO_REPLY_SF_NAME, Config.WE_CHAT_AUTO_REPLY_USER_MSG_MAP_KEY);
+        Log.e(TAG, "onServiceConnected: ok ======= " + mAutoReplyUserMsgMap.size());
     }
 }
 
