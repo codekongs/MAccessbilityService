@@ -40,10 +40,23 @@ public class WeChatAutoReplyAccessibilityService extends BaseAccessibilityServic
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         int eventType = event.getEventType();
-        Log.e(TAG, "onAccessibilityEvent: eventType =====" + eventType);
+        Log.e(TAG, "onAccessibilityEvent: eventType ===== CHANGED ======= " + eventType);
+        List<CharSequence> textList;
         switch (eventType) {
             case AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED:
-                List<CharSequence> textList = event.getText();
+                Log.e(TAG, "onAccessibilityEvent: eventType ===== TYPE_NOTIFICATION_STATE_CHANGED");
+                textList = event.getText();
+                if (!textList.isEmpty()) {
+                    for (CharSequence text : textList) {
+                        if (!TextUtils.isEmpty(text)) {
+                            notifyWeChat(event);
+                        }
+                    }
+                }
+                break;
+            case AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED:
+                textList = event.getText();
+                Log.e(TAG, "onAccessibilityEvent: " + textList.size());
                 if (!textList.isEmpty()) {
                     for (CharSequence text : textList) {
                         if (!TextUtils.isEmpty(text)) {
@@ -53,16 +66,17 @@ public class WeChatAutoReplyAccessibilityService extends BaseAccessibilityServic
                 }
                 break;
             case AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED:
-                if (!mIsOpenChatInterface) {
-                    break;
-                }
+                Log.e(TAG, "onAccessibilityEvent: eventType ===== TYPE_WINDOW_STATE_CHANGED");
+//                if (!mIsOpenChatInterface) {
+//                    break;
+//                }
                 String className = event.getClassName().toString();
                 if (className.equals(WE_CHAT_LAUNCHER_UI_NAME)) {
                     if (fillReplyMsg(mAutoReplyUserMsgMap.get(mChatUserName))) {
                         sendMsg();
                     }
                 }
-                mIsOpenChatInterface = false;
+                //mIsOpenChatInterface = false;
                 break;
         }
     }

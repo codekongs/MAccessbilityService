@@ -92,6 +92,7 @@ public class WeChatAutoReplyActivity extends AppCompatActivity implements View.O
         boolean isEnabled = false;
         switch (v.getId()) {
             case R.id.id_start_auto_reply_btn:
+                //startService(new Intent(this, WeChatNotificationListenerService.class));
                 WeChatAutoReplyAccessibilityService.getInstance().init(this);
                 isEnabled = WeChatAutoReplyAccessibilityService.getInstance().checkAccessibilityEnabled(Config.WE_CHAT_AUTO_REPLY_SERVICE_NAME);
                 if (!isEnabled) {
@@ -99,6 +100,7 @@ public class WeChatAutoReplyActivity extends AppCompatActivity implements View.O
                 }
                 break;
             case R.id.id_close_auto_reply_btn:
+                //WeChatNotificationListenerService.openNotificationListenSettings(this);
                 WeChatAutoReplyAccessibilityService.getInstance().init(this);
                 isEnabled = WeChatAutoReplyAccessibilityService.getInstance().checkAccessibilityEnabled(Config.WE_CHAT_AUTO_REPLY_SERVICE_NAME);
                 if (isEnabled) {
