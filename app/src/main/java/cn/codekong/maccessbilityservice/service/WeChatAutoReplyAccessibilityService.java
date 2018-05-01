@@ -7,15 +7,23 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
+
+import com.google.gson.Gson;
 
 import java.util.List;
 import java.util.Map;
 
+import cn.codekong.maccessbilityservice.R;
+import cn.codekong.maccessbilityservice.bean.TuLingReq;
+import cn.codekong.maccessbilityservice.bean.TuLingRsp;
 import cn.codekong.maccessbilityservice.config.Config;
+import cn.codekong.maccessbilityservice.net.HttpCallBackListener;
+import cn.codekong.maccessbilityservice.net.HttpMethod;
+import cn.codekong.maccessbilityservice.net.NetConnection;
 import cn.codekong.maccessbilityservice.service.base.BaseAccessibilityService;
+import cn.codekong.maccessbilityservice.util.EncryptUtil;
 import cn.codekong.maccessbilityservice.util.SfUtil;
 
 /**
@@ -30,8 +38,6 @@ public class WeChatAutoReplyAccessibilityService extends BaseAccessibilityServic
 
     private Map<String, String> mAutoReplyUserMsgMap;
 
-    //是否打开了用户聊天界面
-    private boolean mIsOpenChatInterface;
     //聊天用户名
     private String mChatUserName;
     //聊天内容
@@ -40,11 +46,9 @@ public class WeChatAutoReplyAccessibilityService extends BaseAccessibilityServic
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         int eventType = event.getEventType();
-        Log.e(TAG, "onAccessibilityEvent: eventType ===== CHANGED ======= " + eventType);
         List<CharSequence> textList;
         switch (eventType) {
             case AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED:
-                Log.e(TAG, "onAccessibilityEvent: eventType ===== TYPE_NOTIFICATION_STATE_CHANGED");
                 textList = event.getText();
                 if (!textList.isEmpty()) {
                     for (CharSequence text : textList) {
@@ -56,7 +60,6 @@ public class WeChatAutoReplyAccessibilityService extends BaseAccessibilityServic
                 break;
             case AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED:
                 textList = event.getText();
-                Log.e(TAG, "onAccessibilityEvent: " + textList.size());
                 if (!textList.isEmpty()) {
                     for (CharSequence text : textList) {
                         if (!TextUtils.isEmpty(text)) {
@@ -66,31 +69,84 @@ public class WeChatAutoReplyAccessibilityService extends BaseAccessibilityServic
                 }
                 break;
             case AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED:
-                Log.e(TAG, "onAccessibilityEvent: eventType ===== TYPE_WINDOW_STATE_CHANGED");
-//                if (!mIsOpenChatInterface) {
-//                    break;
-//                }
                 String className = event.getClassName().toString();
                 if (className.equals(WE_CHAT_LAUNCHER_UI_NAME)) {
-                    if (fillReplyMsg(mAutoReplyUserMsgMap.get(mChatUserName))) {
-                        sendMsg();
+                    final String replyMsg = mAutoReplyUserMsgMap.get(mChatUserName);
+                    if (getString(R.string.str_robot).equals(replyMsg)){
+                        String paramsStr = buildReqParams();
+                        //网路请求图灵接口
+                        new NetConnection(Config.TU_LING_BASE_URL, HttpMethod.POST, new HttpCallBackListener() {
+                            @Override
+                            public void onFinish(String response) {
+                                Gson gson = new Gson();
+                                TuLingRsp tuLingRsp = gson.fromJson(response, TuLingRsp.class);
+                                if (tuLingRsp.getResults() != null){
+                                    List<TuLingRsp.Results> resultsList = tuLingRsp.getResults();
+                                    StringBuilder lines = new StringBuilder();
+                                    for(TuLingRsp.Results results : resultsList){
+                                        if (results.getValues().getText() != null){
+                                            lines.append(results.getValues().getText());
+                                        }
+                                        if (results.getValues().getUrl() != null){
+                                            lines.append(results.getValues().getUrl());
+                                        }
+                                    }
+                                    if (fillReplyMsg(lines.toString())){
+                                        sendMsg();
+                                    }
+                                }
+                            }
+
+                            @Override
+                            public void onError(Exception e) {
+
+                            }
+                        }, null, paramsStr);
+                    }else{
+                        if (fillReplyMsg(mAutoReplyUserMsgMap.get(mChatUserName))){
+                            sendMsg();
+                        }
                     }
                 }
-                //mIsOpenChatInterface = false;
                 break;
         }
+    }
+
+    /**
+     * 组装请求参数
+     * @return
+     */
+    private String buildReqParams() {
+        if (TextUtils.isEmpty(mChatUserName) || TextUtils.isEmpty(mChatContent)){
+            return "";
+        }
+        TuLingReq tuLingReq = new TuLingReq();
+
+        tuLingReq.setReqType(0);
+
+        TuLingReq.Perception perception = new TuLingReq.Perception();
+        TuLingReq.Perception.InputText inputText = new TuLingReq.Perception.InputText();
+        inputText.setText(mChatContent);
+        perception.setInputText(inputText);
+        tuLingReq.setPerception(perception);
+
+        TuLingReq.UserInfo userInfo = new TuLingReq.UserInfo();
+        userInfo.setApiKey(Config.TU_LING_API_KEY);
+        userInfo.setUserId(EncryptUtil.md5Encrypt(mChatUserName));
+        tuLingReq.setUserInfo(userInfo);
+
+        Gson gson = new Gson();
+        return gson.toJson(tuLingReq, TuLingReq.class);
     }
 
     /**
      * 唤起微信界面
      */
     private void notifyWeChat(AccessibilityEvent event) {
-        mIsOpenChatInterface = true;
         if (event.getParcelableData() != null && event.getParcelableData() instanceof Notification) {
             Notification notification = (Notification) event.getParcelableData();
             String content = notification.tickerText.toString();
 
-            Log.e(TAG, "notifyWeChat: content = " + content);
             //获取通知内容并分割
             String[] c = content.split(":");
             mChatUserName = c[0].trim();
@@ -146,10 +202,8 @@ public class WeChatAutoReplyAccessibilityService extends BaseAccessibilityServic
         if (sendBtnNodeInfo != null && "android.widget.Button".equals(sendBtnNodeInfo.getClassName().toString())) {
             sendBtnNodeInfo.performAction(AccessibilityNodeInfo.ACTION_CLICK);
         }
-        //返回到微信主页面
-        performBackClick();
         //返回到桌面
-        performBackClick();
+        performHomeClick();
     }
 
 
@@ -158,7 +212,6 @@ public class WeChatAutoReplyAccessibilityService extends BaseAccessibilityServic
         super.onServiceConnected();
         //从SharePreferences中读取所有的配置
         mAutoReplyUserMsgMap = SfUtil.getDataList(this, Config.WE_CHAT_AUTO_REPLY_SF_NAME, Config.WE_CHAT_AUTO_REPLY_USER_MSG_MAP_KEY);
-        Log.e(TAG, "onServiceConnected: ok ======= " + mAutoReplyUserMsgMap.size());
     }
 }
 

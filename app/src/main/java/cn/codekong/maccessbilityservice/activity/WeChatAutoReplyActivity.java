@@ -12,6 +12,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListView;
 
@@ -125,11 +126,18 @@ public class WeChatAutoReplyActivity extends AppCompatActivity implements View.O
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         EditText inputUserNameEd = dialogView.findViewById(R.id.id_input_username_ed);
-                        EditText inputMsgEd = dialogView.findViewById(R.id.id_input_msg_ed);
+                        final EditText inputMsgEd = dialogView.findViewById(R.id.id_input_msg_ed);
+                        CheckBox useRobotCb = dialogView.findViewById(R.id.id_robot_auto_reply_cb);
+
                         if (TextUtils.isEmpty(inputUserNameEd.getText())
                                 || TextUtils.isEmpty(inputMsgEd.getText())) {
                             MsgUtil.showToast(WeChatAutoReplyActivity.this, R.string.str_input_dont_is_empty);
                         }
+
+                        if (useRobotCb.isChecked()){
+                            inputMsgEd.setText(R.string.str_robot);
+                        }
+
                         Map<String, String> map = new HashMap<>();
                         map.put(inputUserNameEd.getText().toString(), inputMsgEd.getText().toString());
                         SfUtil.saveData(WeChatAutoReplyActivity.this, Config.WE_CHAT_AUTO_REPLY_SF_NAME, map, Config.WE_CHAT_AUTO_REPLY_USER_MSG_MAP_KEY, true);

@@ -79,6 +79,18 @@ public class BaseAccessibilityService extends AccessibilityService {
     }
 
     /**
+     * 模拟按Home键操作
+     */
+    public void performHomeClick() {
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        performGlobalAction(GLOBAL_ACTION_HOME);
+    }
+
+    /**
      * 模拟下滑操作
      */
     public void performScrollBackward() {

@@ -13,4 +13,10 @@ public class Config {
 
     //微信自动回复服务名
     public static final String WE_CHAT_AUTO_REPLY_SERVICE_NAME = "cn.codekong.maccessbilityservice.service.WeChatAutoReplyAccessibilityService";
+
+    //图灵请求地址
+    public static final String TU_LING_BASE_URL = "http://openapi.tuling123.com/openapi/api/v2";
+
+    //图灵apikey
+    public static final String TU_LING_API_KEY = "9d39ae6a25e94cc38dcc52cd0f8e74b5";
 }

@@ -11,5 +11,6 @@
     <string name="str_add">添加</string>
     <string name="str_cancel">取消</string>
     <string name="str_input_dont_is_empty">输入不能为空</string>
+    <string name="str_robot">机器人</string>
 
 </resources>
